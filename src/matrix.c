@@ -62,7 +62,8 @@ matrix *matrix_multiply_distributed(matrix *A, matrix *B, int rank, int size) {
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
 
-  matrix * C = create_matrix(A->rows, B->cols);
+  matrix * C;
+  C = create_matrix(A->rows, B->cols);
 
   int local_rows = A->rows / size;
   matrix *local_A = create_matrix(local_rows, A->cols);
@@ -129,7 +130,8 @@ matrix *matrix_add_distributed(matrix *A, matrix *B, int rank, int size) {
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
 
-  matrix * C = create_matrix(A->rows, A->cols);
+  matrix * C;
+  C = create_matrix(A->rows, A->cols);
 
   int local_rows = A->rows / size;
   matrix *local_A = create_matrix(local_rows, A->cols);
@@ -188,7 +190,7 @@ matrix *matrix_scaler_multiply(double scalar, matrix *mat) {
 
   for (int i = 0; i < mat->rows; i++) {
     for (int j = 0; j < mat->cols; j++) {
-      res[i][j] = mat[i][j] * scalar;
+      res->values[i * res->cols + j] = mat[i * mat->rows + j] * scalar;
     }
   }
 
@@ -196,6 +198,49 @@ matrix *matrix_scaler_multiply(double scalar, matrix *mat) {
 }
 
 
-matrix *matrix_scaler_multiply_distributed(double scalar, matrix *mat, matrix *res, int rank, int size);
+/*
+ *
+ */
+matrix *matrix_scaler_multiply_distributed(double scalar, matrix *mat, int rank, int size) {
+  matrix * res;
+  res = create_matrix(mat->rows, mat->cols);
+
+  int local_rows = mat->rows / size;
+  matrix *local_mat = create_matrix(local_rows, mat->cols);
+
+  TRY(MPI_Scatter(
+    mat->values,
+    local_rows * mat->cols,
+    MPI_DOUBLE,
+    local_mat,
+    local_rows * mat->cols,
+    MPI_DOUBLE,
+    MASTER,
+    MPI_COMM_WORLD
+  ), MPI_SUCCESS, "MPI_Scatter");
+
+  for (int i = 0; i < local_rows; i++) {
+    for (int j = 0; j < mat->cols; j++) {
+      local_mat->values[i * mat->cols + j] *= scalar;
+    }
+  }
+
+  TRY(MPI_Gather(
+    local_mat->values,
+    local_rows * local_mat->cols,
+    MPI_DOUBLE,
+    res->values,
+    local_rows * local_mat->cols,
+    MPI_DOUBLE,
+    MASTER,
+    MPI_COMM_WORLD
+  ), MPI_SUCCESS, "MPI_Gather");
+
+  free_matrix(local_mat);
+
+  return res;
+}
+
+
 matrix *matrix_subtract_distributed(matrix *A, matrix *B, matrix *C, int rank, int size);
 matrix *matrix_transpose(matrix *mat, matrix *res);
