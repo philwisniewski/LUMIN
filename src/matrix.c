@@ -53,7 +53,7 @@ void print_matrix(matrix *mat) {
 /*
  * distributed matrix multiplication
  */
-matrix *matrix_multiply_distributed(matrix *A, matrix *B, matrix *C, int rank, int size) {
+matrix *matrix_multiply_distributed(matrix *A, matrix *B, int rank, int size) {
   // assert matrix sizes are compatible
   if (A->cols != B->rows) {
     if (rank == MASTER) {
@@ -61,6 +61,8 @@ matrix *matrix_multiply_distributed(matrix *A, matrix *B, matrix *C, int rank, i
     }
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
+
+  matrix * C = create_matrix(A->rows, B->cols);
 
   int local_rows = A->rows / size;
   matrix *local_A = create_matrix(local_rows, A->cols);
@@ -118,7 +120,7 @@ matrix *matrix_multiply_distributed(matrix *A, matrix *B, matrix *C, int rank, i
 /*
  *
  */
-matrix *matrix_add_distributed(matrix *A, matrix *B, matrix *C, int rank, int size) {
+matrix *matrix_add_distributed(matrix *A, matrix *B, int rank, int size) {
   // assert matrix sizes are compatible
   if (A->rows != B->rows || A->cols != B->cols) {
     if (rank == MASTER) {
@@ -126,6 +128,8 @@ matrix *matrix_add_distributed(matrix *A, matrix *B, matrix *C, int rank, int si
     }
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
+
+  matrix * C = create_matrix(A->rows, A->cols);
 
   int local_rows = A->rows / size;
   matrix *local_A = create_matrix(local_rows, A->cols);
@@ -177,10 +181,21 @@ matrix *matrix_add_distributed(matrix *A, matrix *B, matrix *C, int rank, int si
 
 
 /*
- *
+ * 
  */
+matrix *matrix_scaler_multiply(double scalar, matrix *mat) {
+  matrix * res = create_matrix(mat->rows, mat->cols);
 
-matrix *matrix_scaler_multiply(double scalar, matrix *mat, matrix *res);
+  for (int i = 0; i < mat->rows; i++) {
+    for (int j = 0; j < mat->cols; j++) {
+      res[i][j] = mat[i][j] * scalar;
+    }
+  }
+
+  return res;
+}
+
+
 matrix *matrix_scaler_multiply_distributed(double scalar, matrix *mat, matrix *res, int rank, int size);
 matrix *matrix_subtract_distributed(matrix *A, matrix *B, matrix *C, int rank, int size);
 matrix *matrix_transpose(matrix *mat, matrix *res);
