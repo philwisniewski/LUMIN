@@ -76,6 +76,7 @@ if (ENABLE_CUDA)
 endif()
 
 # tests ?
-# if (EXISTS ${PROJECT_SOURCE_DIR}/tests)
-#   enable_testing()
-# endif()
+if (EXISTS ${PROJECT_SOURCE_DIR}/tests/CMakeLists.txt)
+  enable_testing()
+  add_subdirectory(tests)
+endif()
