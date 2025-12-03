@@ -10,8 +10,9 @@
 
 namespace lumin {
 
-static std::shared_ptr<double> allocate_buffer(size_t n) {
-  return std::shared_ptr<double>(new double[n](), [](double* p){ delete[] p; });
+static std::shared_ptr<double[]> allocate_buffer(size_t n) {
+  // return std::shared_ptr<double>(new double[n](), [](double* p){ delete[] p; });
+  return std::shared_ptr<double[]>(new double[n], std::default_delete<double[]>());
 }
 
 Matrix::Matrix(size_t rows, size_t cols)
@@ -26,30 +27,34 @@ Matrix::Matrix(size_t rows, size_t cols, std::shared_ptr<Backend> backend_ptr)
     m_values( allocate_buffer(rows * cols) )
 { }
 
-double* Matrix::data() noexcept {
-  return m_values.get();
-}
+Matrix::Matrix()
+  : m_rows(0), m_cols(0), backend(nullptr), m_values(nullptr)
+{ }
 
-const double* Matrix::data() const noexcept {
-  return m_values.get();
-}
+//  double* Matrix::data() noexcept {
+//   return m_values.get();
+// }
+
+// const double* Matrix::data() const noexcept {
+//   return m_values.get();
+// }
 
 static void check_same_size(const Matrix& A, const Matrix& B, const char* op) {
-  if (A.m_rows != B.m_rows || A.m_cols != B.m_cols) {
+  if (A.rows() != B.rows() || A.cols() != B.cols()) {
     std::ostringstream oss;
     oss << "Matrix " << op << " dimension mismatch: "
-        << "(" << A.m_rows << "x" << A.m_cols << ") vs "
-        << "(" << B.m_rows << "x" << B.m_cols << ")";
+        << "(" << A.rows() << "x" << A.cols() << ") vs "
+        << "(" << B.rows() << "x" << B.cols() << ")";
     throw std::runtime_error(oss.str());
   }
 }
 
 static void check_multiply_dims(const Matrix& A, const Matrix& B) {
-  if (A.m_cols != B.m_rows) {
+  if (A.cols() != B.rows()) {
     std::ostringstream oss;
     oss << "Matrix multiply dimension mismatch: "
-        << "(" << A.m_rows << "x" << A.m_cols << ") vs "
-        << "(" << B.m_rows << "x" << B.m_cols << ")";
+        << "(" << A.rows() << "x" << A.cols() << ") vs "
+        << "(" << B.rows() << "x" << B.cols() << ")";
     throw std::runtime_error(oss.str());
   }
 }
@@ -57,43 +62,43 @@ static void check_multiply_dims(const Matrix& A, const Matrix& B) {
 // CPU fallback
 Matrix cpu_add(const Matrix& A, const Matrix& B) {
   check_same_size(A, B, "add");
-  Matrix R(A.m_rows, A.m_cols);
-  size_t N = A.m_rows * A.m_cols;
+  Matrix R(A.rows(), A.cols());
+  size_t N = A.rows() * A.cols();
   for (size_t i = 0; i < N; i++) {
-    R.m_values.get()[i] = A.m_values.get()[i] + B.m_values.get()[i];
+    R.data()[i] = A.data()[i] + B.data()[i];
   }
   return R;
 }
 
 Matrix cpu_subtract(const Matrix& A, const Matrix& B) {
   check_same_size(A, B, "subtract");
-  Matrix R(A.m_rows, A.m_cols);
-  size_t N = A.m_rows * A.m_cols;
+  Matrix R(A.rows(), A.cols());
+  size_t N = A.rows() * A.cols();
   for (size_t i = 0; i < N; i++) {
-    R.m_values.get()[i] = A.m_values.get()[i] - B.m_values.get()[i];
+    R.data()[i] = A.data()[i] - B.data()[i];
   }
   return R;
 }
 
 Matrix cpu_scalar(double s, const Matrix& A) {
-  Matrix R(A.m_rows, A.m_cols);
-  size_t N = A.m_rows * A.m_cols;
+  Matrix R(A.rows(), A.cols());
+  size_t N = A.rows() * A.cols();
   for (size_t i = 0; i < N; i++) {
-    R.m_values.get()[i] = A.m_values.get()[i] * s;
+    R.data()[i] = A.data()[i] * s;
   }
   return R;
 }
 
 Matrix cpu_multiply(const Matrix& A, const Matrix& B) {
   check_multiply_dims(A, B);
-  Matrix R(A.m_rows, B.m_cols);
-  for (size_t i = 0; i < static_cast<size_t>(A.m_rows); i++) {
-    for (size_t k = 0; k < static_cast<size_t>(A.m_cols); k++) {
-      double a = A.m_values.get()[i * A.m_cols + k];
-      size_t rowR = i * R.m_cols;
-      size_t rowB = k * B.m_cols;
-      for (size_t j = 0; j < static_cast<size_t>(B.m_cols); j++) {
-        R.m_values.get()[rowR + j] += a * B.m_values.get()[rowB + j];
+  Matrix R(A.rows(), B.cols());
+  for (size_t i = 0; i < static_cast<size_t>(A.rows()); i++) {
+    for (size_t k = 0; k < static_cast<size_t>(A.cols()); k++) {
+      double a = A.data()[i * A.cols() + k];
+      size_t rowR = i * R.cols();
+      size_t rowB = k * B.cols();
+      for (size_t j = 0; j < static_cast<size_t>(B.cols()); j++) {
+        R.data()[rowR + j] += a * B.data()[rowB + j];
       }
     }
   }
@@ -101,10 +106,10 @@ Matrix cpu_multiply(const Matrix& A, const Matrix& B) {
 }
 
 Matrix cpu_transpose(const Matrix& A) {
-  Matrix R(A.m_cols, A.m_rows);
-  for (size_t i = 0; i < static_cast<size_t>(A.m_rows); i++) {
-    for (size_t j = 0; j < static_cast<size_t>(A.m_cols); j++) {
-      R.m_values.get()[j * R.m_cols + i] = A.m_values.get()[i * A.m_cols + j];
+  Matrix R(A.cols(), A.rows());
+  for (size_t i = 0; i < static_cast<size_t>(A.rows()); i++) {
+    for (size_t j = 0; j < static_cast<size_t>(A.cols()); j++) {
+      R.data()[j * R.cols() + i] = A.data()[i * A.cols() + j];
     }
   }
   return R;
@@ -153,7 +158,7 @@ Matrix Matrix::random_int(size_t rows, size_t cols, int max_value) {
   std::uniform_int_distribution<> dis(0, max_value);
   size_t N = rows * cols;
   for (size_t i = 0; i < N; i++) {
-    R.m_values.get()[i] = static_cast<double>(dis(gen));
+    R.data()[i] = static_cast<double>(dis(gen));
   }
   return R;
 }

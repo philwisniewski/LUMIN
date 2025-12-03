@@ -1,11 +1,13 @@
 #pragma once
 #include "backend.hpp"
+#include <mpi.h>
 
 namespace lumin {
   
   class MPIBackend : public Backend {
   public:
-    MPIBackend(int rank, int size);
+    // MPIBackend(int rank, int size);
+    MPIBackend(MPI_Comm comm);
 
     Matrix add(const Matrix& A, const Matrix& B) override;
     Matrix multiply(const Matrix& A, const Matrix& B) override;
@@ -16,7 +18,8 @@ namespace lumin {
     const char* name() const override { return "MPI"; }
 
   private:
-    int rank, size;
+    int m_rank, m_size;
+    MPI_Comm m_comm;
   };
 
 }

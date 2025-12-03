@@ -12,7 +12,7 @@
 namespace lumin {
 
 static void mpi_abort_print(int rank, const std::string &msg) {
-  if (rank == 0) std::cerr << "MPIBackend error: " msg << std::endl;
+  if (rank == 0) std::cerr << "MPIBackend error: " << msg << std::endl;
   MPI_Abort(MPI_COMM_WORLD, 1);
 }
 
@@ -35,15 +35,11 @@ static void compute_counts_displs_rows(int total_rows, int cols, int world_size,
   }
 }
 
-MPIBackend::MPIBackend(MPI_Comm, comm)
+MPIBackend::MPIBackend(MPI_Comm comm)
   : m_comm(comm)
 {
   MPI_Comm_rank(m_comm, &m_rank);
   MPI_Comm_size(m_comm, &m_size);
-}
-
-const char* MPIBackend::name() const {
-  return "MPI";
 }
 
 Matrix MPIBackend::add(const Matrix& A, const Matrix& B) {
@@ -100,7 +96,7 @@ Matrix MPIBackend::add(const Matrix& A, const Matrix& B) {
     localC.data(),
     local_elems,
     MPI_DOUBLE,
-    (mpi_rank == 0 ? C.data() : nullptr),
+    (m_rank == 0 ? C.data() : nullptr),
     counts.data(),
     displs.data(),
     MPI_DOUBLE,
@@ -165,7 +161,7 @@ Matrix MPIBackend::subtract(const Matrix& A, const Matrix& B) {
     localC.data(),
     local_elems,
     MPI_DOUBLE,
-    (mpi_rank == 0 ? C.data() : nullptr),
+    (m_rank == 0 ? C.data() : nullptr),
     counts.data(),
     displs.data(),
     MPI_DOUBLE,
@@ -199,7 +195,7 @@ Matrix MPIBackend::scalar(double s, const Matrix& A) {
   );
 
   for (int i = 0; i < local_elems; i++) {
-    localRes[i] = localA[i] * s;
+    localR[i] = localA[i] * s;
   }
 
   Matrix R;
@@ -208,7 +204,7 @@ Matrix MPIBackend::scalar(double s, const Matrix& A) {
   }
 
   MPI_Gatherv(
-    localA.data(),
+    localR.data(),
     local_elems,
     MPI_DOUBLE,
     (m_rank == 0 ? R.data() : nullptr),
@@ -345,7 +341,7 @@ Matrix MPIBackend::transpose(const Matrix& A) {
     return res;
   }
 
-  return Matrix(0,0);}
+  return Matrix(0,0);
 }
 
 }
