@@ -12,6 +12,7 @@ public:
   Matrix subtract(const Matrix& A, const Matrix& B) override;
   Matrix scalar(double s, const Matrix& A) override;
   Matrix transpose(const Matrix& A) override;
+  double dot(const Matrix& A, const Matrix& B) override;
 
   const char* name() const override { return "CUDA"; }
 

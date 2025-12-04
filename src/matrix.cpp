@@ -1,5 +1,5 @@
-#include "lumin/matrix.hpp"
-#include "lumin/backend.hpp"
+#include "lumin.hpp"
+#include "lumin.hpp"
 
 #include <memory>
 #include <cstring>
@@ -17,7 +17,7 @@ static std::shared_ptr<double[]> allocate_buffer(size_t n) {
 
 Matrix::Matrix(size_t rows, size_t cols)
   : m_rows(rows), m_cols(cols),
-    backend(nullptr),
+    backend(get_default_backend()), // backend(nullptr),
     m_values( allocate_buffer(rows * cols) )
 { }
 
@@ -105,6 +105,16 @@ Matrix cpu_multiply(const Matrix& A, const Matrix& B) {
   return R;
 }
 
+double cpu_dot(const Matrix& A, const Matrix& B) {
+  double res = 0.0;
+  for (size_t i = 0; i < static_cast<size_t>(A.rows()); i++) {
+    for (size_t j = 0; j < static_cast<size_t>(A.cols()); j++) {
+      res += A(i, j) * B(i, j);
+    }
+  }
+  return res;
+}
+
 Matrix cpu_transpose(const Matrix& A) {
   Matrix R(A.cols(), A.rows());
   for (size_t i = 0; i < static_cast<size_t>(A.rows()); i++) {
@@ -142,6 +152,13 @@ Matrix Matrix::multiply(const Matrix& other) const {
     return backend->multiply(*this, other);
   }
   return cpu_multiply(*this, other);
+}
+
+double Matrix::dot(const Matrix& other) const {
+  if (backend) {
+    return backend->dot(*this, other);
+  }
+  return cpu_dot(*this, other);
 }
 
 Matrix Matrix::transpose() const {

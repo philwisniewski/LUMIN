@@ -292,6 +292,66 @@ Matrix MPIBackend::multiply(const Matrix& A, const Matrix& B) {
   return (m_rank == 0) ? C : Matrix(0, 0);
 }
 
+double MPIBackend::dot(const Matrix& A, const Matrix& B) {
+  if (A.rows() != B.rows() || A.cols() != B.cols()) {
+    mpi_abort_print(m_rank, "dot: dimension mismatch");
+  }
+
+  int total_rows = static_cast<int>(A.rows());
+  int cols = static_cast<int>(A.cols());
+
+  std::vector<int> counts, displs;
+  compute_counts_displs_rows(total_rows, cols, m_size, counts, displs);
+
+  int local_elems = counts[m_rank];
+  std::vector<double> localA(local_elems);
+  std::vector<double> localB(local_elems);
+  double localTotal = 0.0; 
+
+  MPI_Scatterv(
+    (m_rank == 0 ? const_cast<double*>(A.data()) : nullptr), // sendbuf
+    counts.data(), // sendcounts
+    displs.data(), // displs
+    MPI_DOUBLE, // sendtype
+    localA.data(), // recvbuf
+    local_elems, // recvcount
+    MPI_DOUBLE, // recvtype
+    0, // root
+    m_comm // comm
+  );
+
+  MPI_Scatterv(
+    (m_rank == 0 ? const_cast<double*>(B.data()) : nullptr),
+    counts.data(),
+    displs.data(),
+    MPI_DOUBLE,
+    localB.data(),
+    local_elems,
+    MPI_DOUBLE,
+    0,
+    m_comm
+  );
+  
+  // local compute
+  for (int i = 0; i < local_elems; i++) {
+    localTotal += localA[i] * localB[i];
+  }
+
+  double res = 0.0;
+
+  MPI_Reduce(
+    &localTotal,
+    (m_rank == 0 ? &res : nullptr),
+    1,
+    MPI_DOUBLE,
+    MPI_SUM,
+    0,
+    m_comm
+  );
+  
+  return res;
+}
+
 Matrix MPIBackend::transpose(const Matrix& A) {
   int total_rows = static_cast<int>(A.rows());
   int cols = static_cast<int>(A.rows());
