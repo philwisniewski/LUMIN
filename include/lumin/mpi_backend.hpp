@@ -1,5 +1,7 @@
 #pragma once
 #include "backend.hpp"
+
+#ifdef LUMIN_ENABLE_MPI
 #include <mpi.h>
 
 namespace lumin {
@@ -23,4 +25,6 @@ namespace lumin {
     MPI_Comm m_comm;
   };
 
-}
+} // namespace lumin
+
+#endif // LUMIN_ENABLE_MPI
