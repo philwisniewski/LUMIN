@@ -16,8 +16,6 @@ if (ENABLE_MPI)
   find_package(MPI)
   if (MPI_FOUND)
     message(STATUS "MPI found")
-    add_definitions(-DLUMIN_ENABLE_MPI)
-    include_directories(${MPI_INCLUDE_PATH})
   else()
     message(WARNING "MPI not found — MPI backend disabled")
     set(ENABLE_MPI OFF)
@@ -27,13 +25,13 @@ endif()
 # CUDA setup
 if (ENABLE_CUDA)
   cmake_policy(SET CMP0146 NEW)
-   find_package(CUDAToolkit)
+  find_package(CUDAToolkit)
+
   if (CUDAToolkit_FOUND)
     message(STATUS "CUDA toolkit found at ${CUDAToolkit_INCLUDE_DIRS}")
     enable_language(CUDA)
     set(CMAKE_CUDA_STANDARD 17)
     set(CMAKE_CUDA_ARCHITECTURES native)
-    add_definitions(-DLUMIN_ENABLE_CUDA)
   else()
     message(WARNING "CUDA not found — CUDA backend disabled")
     set(ENABLE_CUDA OFF)
@@ -65,13 +63,14 @@ add_library(lumin STATIC
   ${SRC_BACKENDS}
 )
 
-# MPI linking
-if (ENABLE_MPI)
+# Set compile definitions for the library target only
+if (ENABLE_MPI AND MPI_FOUND)
+  target_compile_definitions(lumin PRIVATE LUMIN_ENABLE_MPI)
   target_link_libraries(lumin PRIVATE MPI::MPI_CXX)
 endif()
 
-# cuda linking
-if (ENABLE_CUDA)
+if (ENABLE_CUDA AND CUDAToolkit_FOUND)
+  target_compile_definitions(lumin PRIVATE LUMIN_ENABLE_CUDA)
   target_link_libraries(lumin PRIVATE CUDA::cudart CUDA::cuda_driver)
 endif()
 

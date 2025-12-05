@@ -1,6 +1,9 @@
 #pragma once
 #include "backend.hpp"
 
+#ifdef LUMIN_ENABLE_CUDA
+#include <cuda_runtime.h>
+
 namespace lumin {
 
 class CUDABackend : public Backend {
@@ -18,6 +21,10 @@ public:
 
 private:
   int device;
+  dim3 gridDim;
+  dim3 blockDim;
 };
 
-}
+} // namespace lumin
+
+#endif // LUMIN_ENABLE_CUDA
