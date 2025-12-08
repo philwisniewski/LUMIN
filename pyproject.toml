@@ -1,14 +1,14 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "scikit-build", "pybind11>=2.6.0"]
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core>=0.5.0", "pybind11>=2.6.0"]
+build-backend = "scikit_build_core.build"
 
 [project]
-name = "lumin"
-version = "0.1.0"
+name = "lumin-matrix"
+version = "0.1.3"
 description = "High-performance matrix operations library with multiple backends"
 readme = "README.md"
 requires-python = ">=3.6"
-license = "MIT"
+license = {text = "MIT"}
 authors = [
     {name = "Philip Wisniewski"}
 ]
@@ -26,12 +26,28 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering",
 ]
-
-# Tell setuptools that dependencies are in setup.py
-dynamic = ["dependencies"]
+dependencies = [
+    "numpy",
+]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=6.0",
     "numpy",
 ]
+
+[tool.scikit-build]
+# CMake configuration - minimum version requirement
+cmake.version = ">=3.16"
+# Include necessary files in source distribution
+sdist.include = [
+    "include/**",
+    "src/**",
+    "python/**",
+    "CMakeLists.txt",
+    "LICENSE",
+    "README.md",
+]
+# Wheel configuration - use source distribution for now
+# For manylinux wheels, use: wheel.py-api = "cp37-abi3"
+# This requires building in manylinux Docker containers
