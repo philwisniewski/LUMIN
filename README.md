@@ -10,5 +10,7 @@ Done so far:
 
 To do:
 - Autograd?
-- Python bindings
+- Documentation/API
+- improve pip installation
+
 
