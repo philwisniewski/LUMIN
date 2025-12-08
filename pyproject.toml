@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=42", "wheel", "scikit-build", "pybind11>=2.6.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lumin"
+version = "0.1.0"
+description = "High-performance matrix operations library with multiple backends"
+readme = "README.md"
+requires-python = ">=3.6"
+license = "MIT"
+authors = [
+    {name = "Philip Wisniewski"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+]
+
+# Tell setuptools that dependencies are in setup.py
+dynamic = ["dependencies"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "numpy",
+]
