@@ -8,6 +8,9 @@
 #ifdef LUMIN_ENABLE_CUDA
 #include "lumin/cuda_backend.hpp"
 #endif
+#ifdef LUMIN_ENABLE_OPENMP
+#include "lumin/omp_backend.hpp"
+#endif
 
 #include <memory>
 #include <mutex>
@@ -30,6 +33,12 @@ std::shared_ptr<Backend> create_mpi_backend(MPI_Comm comm) {
 #ifdef LUMIN_ENABLE_CUDA
 std::shared_ptr<Backend> create_cuda_backend() {
   return std::make_shared<CUDABackend>();
+}
+#endif
+
+#ifdef LUMIN_ENABLE_OPENMP
+std::shared_ptr<Backend> create_omp_backend() {
+  return std::make_shared<OMPBackend>();
 }
 #endif
 

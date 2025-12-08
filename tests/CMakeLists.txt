@@ -18,6 +18,10 @@ target_link_libraries(test_cpu PRIVATE
 if(ENABLE_CUDA AND CUDAToolkit_FOUND)
   target_link_libraries(test_cpu PRIVATE CUDA::cudart CUDA::cuda_driver)
 endif()
+# Link OpenMP libraries if the library was built with OpenMP support
+if(ENABLE_OPENMP AND OpenMP_CXX_FOUND)
+  target_link_libraries(test_cpu PRIVATE OpenMP::OpenMP_CXX)
+endif()
 gtest_discover_tests(test_cpu)
 
 # MPI tests - conditionally built
@@ -34,6 +38,10 @@ if(ENABLE_MPI AND MPI_FOUND)
   # Link CUDA libraries if the library was built with CUDA support
   if(ENABLE_CUDA AND CUDAToolkit_FOUND)
     target_link_libraries(test_mpi PRIVATE CUDA::cudart CUDA::cuda_driver)
+  endif()
+  # Link OpenMP libraries if the library was built with OpenMP support
+  if(ENABLE_OPENMP AND OpenMP_CXX_FOUND)
+    target_link_libraries(test_mpi PRIVATE OpenMP::OpenMP_CXX)
   endif()
   
   # Find MPI launcher
@@ -80,23 +88,28 @@ if(ENABLE_CUDA AND CUDAToolkit_FOUND)
         CUDA_SEPARABLE_COMPILATION ON
     )
   endif()
+  # Link OpenMP libraries if the library was built with OpenMP support
+  if(ENABLE_OPENMP AND OpenMP_CXX_FOUND)
+    target_link_libraries(test_cuda PRIVATE OpenMP::OpenMP_CXX)
+  endif()
   gtest_discover_tests(test_cuda)
 endif()
 
-# OpenMP tests - ready for when OpenMP backend is implemented
-# Uncomment and adjust when ENABLE_OPENMP option is added to main CMakeLists.txt
-# if(ENABLE_OPENMP)
-#   find_package(OpenMP)
-#   if(OpenMP_CXX_FOUND)
-#     add_executable(test_openmp test_openmp.cpp)
-#     target_link_libraries(test_openmp
-#         lumin
-#         GTest::gtest
-#         GTest::gtest_main
-#         Threads::Threads
-#         OpenMP::OpenMP_CXX
-#     )
-#     gtest_discover_tests(test_openmp)
-#   endif()
-# endif()
+# OpenMP tests - conditionally built
+if(ENABLE_OPENMP AND OpenMP_CXX_FOUND)
+  add_executable(test_omp test_omp.cpp)
+  target_compile_definitions(test_omp PRIVATE LUMIN_ENABLE_OPENMP)
+  target_link_libraries(test_omp PRIVATE
+      lumin
+      GTest::gtest
+      GTest::gtest_main
+      Threads::Threads
+      OpenMP::OpenMP_CXX
+  )
+  # Link CUDA libraries if the library was built with CUDA support
+  if(ENABLE_CUDA AND CUDAToolkit_FOUND)
+    target_link_libraries(test_omp PRIVATE CUDA::cudart CUDA::cuda_driver)
+  endif()
+  gtest_discover_tests(test_omp)
+endif()
 
