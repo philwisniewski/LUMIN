@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(ENABLE_MPI "Enable MPI backend" ON)
 option(ENABLE_CUDA "Enable CUDA backend" ON)
 option(ENABLE_OPENMP "Enable OpenMP backend" ON)
+option(ENABLE_TESTS "Enable building tests" OFF)
 
 # include
 include_directories(${PROJECT_SOURCE_DIR}/include)
@@ -99,8 +100,8 @@ if (ENABLE_OPENMP AND OpenMP_CXX_FOUND)
   target_link_libraries(lumin PRIVATE OpenMP::OpenMP_CXX)
 endif()
 
-# tests ?
-if (EXISTS ${PROJECT_SOURCE_DIR}/tests/CMakeLists.txt)
+# tests - only build if explicitly enabled (disabled by default for pip installs)
+if (ENABLE_TESTS AND EXISTS ${PROJECT_SOURCE_DIR}/tests/CMakeLists.txt)
   enable_testing()
   add_subdirectory(tests)
 endif()
@@ -148,10 +149,11 @@ if (ENABLE_PYTHON)
     # Set output name to just 'lumin' for Python import
     set_target_properties(lumin_python PROPERTIES OUTPUT_NAME "lumin")
     
+    # Install directly into the package directory (not a subdirectory)
     install(TARGETS lumin_python
-            LIBRARY DESTINATION lumin
-            ARCHIVE DESTINATION lumin
-            RUNTIME DESTINATION lumin)
+            LIBRARY DESTINATION .
+            ARCHIVE DESTINATION .
+            RUNTIME DESTINATION .)
 
     message(STATUS "Python bindings enabled")
   else()

@@ -1,8 +1,8 @@
 from skbuild import setup
 
 setup(
-    name="lumin",
-    version="0.1.0",
+    name="lumin-matrix",
+    version="0.1.3",
     author="Philip Wisniewski",
     description="High-performance matrix operations library with multiple backends",
     packages=["lumin"],

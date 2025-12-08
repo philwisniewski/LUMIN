@@ -64,3 +64,5 @@ _skbuild/
 lumin.egg-info/
 
 lumin/
+
+dist/
