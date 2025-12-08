@@ -5,9 +5,10 @@ Work in progress!
 Done so far:
 - basic cpu
 - MPI
+- OpenMP
+- CUDA
 
 To do:
-- CUDA
-- OpenMP
 - Autograd?
 - Python bindings
+
