@@ -11,3 +11,10 @@
 #include "lumin/mpi_backend.hpp"
 #endif
 
+#ifdef LUMIN_ENABLE_OPENMP
+#include "lumin/omp_backend.hpp"
+#endif
+
+#ifdef LUMIN_ENABLE_OPENMP
+#include "lumin/omp_backend.hpp"
+#endif

@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # options for backends
 option(ENABLE_MPI "Enable MPI backend" ON)
 option(ENABLE_CUDA "Enable CUDA backend" ON)
+option(ENABLE_OPENMP "Enable OpenMP backend" ON)
 
 # include
 include_directories(${PROJECT_SOURCE_DIR}/include)
@@ -38,6 +39,17 @@ if (ENABLE_CUDA)
   endif()
 endif()
 
+# OpenMP setup
+if (ENABLE_OPENMP)
+  find_package(OpenMP)
+  if (OpenMP_CXX_FOUND)
+    message(STATUS "OpenMP found")
+  else()
+    message(WARNING "OpenMP not found — OpenMP backend disabled")
+    set(ENABLE_OPENMP OFF)
+  endif()
+endif()
+
 # core src
 set(SRC_CORE
   src/matrix.cpp
@@ -57,6 +69,10 @@ if (ENABLE_CUDA)
   list(APPEND SRC_BACKENDS src/backends/cuda_backend.cu)
 endif()
 
+if (ENABLE_OPENMP)
+  list(APPEND SRC_BACKENDS src/backends/omp_backend.cpp)
+endif()
+
 # build library
 add_library(lumin STATIC
   ${SRC_CORE}
@@ -72,6 +88,11 @@ endif()
 if (ENABLE_CUDA AND CUDAToolkit_FOUND)
   target_compile_definitions(lumin PRIVATE LUMIN_ENABLE_CUDA)
   target_link_libraries(lumin PRIVATE CUDA::cudart CUDA::cuda_driver)
+endif()
+
+if (ENABLE_OPENMP AND OpenMP_CXX_FOUND)
+  target_compile_definitions(lumin PRIVATE LUMIN_ENABLE_OPENMP)
+  target_link_libraries(lumin PRIVATE OpenMP::OpenMP_CXX)
 endif()
 
 # tests ?

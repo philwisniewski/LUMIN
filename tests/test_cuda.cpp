@@ -55,6 +55,27 @@ TEST_F(CUDAMatrixTest, MultiplyMatricesBig) {
   EXPECT_EQ(C.data()[1], 2000);
 }
 
+TEST_F(CUDAMatrixTest, TransposeMatrix) {
+  auto b = lumin::create_cuda_backend();
+  lumin::set_default_backend(b);
+  
+  lumin::Matrix A(100, 200);
+  for (size_t i = 0; i < A.rows() * A.cols(); ++i) {
+    A.data()[i] = i;
+  }
+
+  lumin::Matrix C = A.transpose();
+
+  EXPECT_EQ(C.rows(), 200);
+  EXPECT_EQ(C.cols(), 100);
+
+  std::cout << A(0, 0) << " " << A(0, 1) << " " << A(1, 0) << " " << A(1, 1) << std::endl;
+  std::cout << C(0, 0) << " " << C(0, 1) << " " << C(1, 0) << " " << C(1, 1) << std::endl;
+  
+  EXPECT_EQ(C(0, 0), 0);
+  EXPECT_EQ(C(0, 1), A(1, 0));
+  EXPECT_EQ(C(1, 0), A(0, 1));
+}
 #else
 
 // If CUDA is not enabled, provide a dummy test to avoid empty test suite
